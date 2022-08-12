@@ -1,13 +1,12 @@
+mod crossterm;
 mod domain;
+mod ui;
 
+use crate::crossterm::run;
 use domain::pomodoro::*;
+use std::{error::Error, time::Duration};
 
-fn main() {
-  PomodoroImpl::new().init(printer);
-}
-
-fn printer(t: i16) {
-  let minutes = t / 60;
-  let seconds = t % 60;
-  println!("{:}:{:02}", minutes, seconds);
+fn main() -> Result<(), Box<dyn Error>> {
+  run()?;
+  Ok(())
 }
