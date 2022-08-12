@@ -14,3 +14,4 @@ unicode-width = "0.1"
 crossterm = "0.23"
 serde = { version = "1", optional = true, features = ["derive"]}
 tui = "~0.18.0"
+tokio = { version = "1", features = ["full"] }
