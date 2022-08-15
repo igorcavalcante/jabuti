@@ -49,8 +49,8 @@ impl PomodoroImpl {
     thread::spawn(move || {
       for i in ticker {
         let mut secs = se_clone.lock().unwrap();
+        send -> mesg
         *secs = i;
-        println!("{:}", secs)
       }
     });
   }
