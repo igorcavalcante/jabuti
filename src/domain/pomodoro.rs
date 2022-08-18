@@ -1,4 +1,4 @@
-use std::cmp::*;
+/* use std::cmp::*;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::thread;
@@ -49,7 +49,6 @@ impl PomodoroImpl {
     thread::spawn(move || {
       for i in ticker {
         let mut secs = se_clone.lock().unwrap();
-        send -> mesg
         *secs = i;
       }
     });
@@ -102,3 +101,4 @@ impl Pomodoro for PomodoroImpl {
     max(remaining, 0)
   }
 }
+ */
