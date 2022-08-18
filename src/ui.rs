@@ -1,6 +1,7 @@
 use crate::domain::pomodoroTimer::*;
 use std::sync::mpsc;
 use std::thread;
+use notify_rust::Notification;
 
 use crossterm::{
     event::{self, Event as CEvent, KeyCode, DisableMouseCapture, EnableMouseCapture},
@@ -68,12 +69,19 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn notification() {
+    Notification::new()
+        .summary("Pomodoro timer")
+        .body("Time is up")
+        .show().unwrap();
+}
+
 fn run_app<B: Backend>(
     terminal: &mut Terminal<B>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let (tx, rx) = mpsc::channel();
     let tick_rate = Duration::from_millis(200);
-    let mut app = PomodoroTimerImpl::new();
+    let mut app = PomodoroTimerImpl::new(notification);
 
     thread::spawn(move || {
         let mut last_tick = Instant::now();
@@ -144,7 +152,7 @@ fn run_app<B: Backend>(
 
             rect.render_widget(tabs, chunks[0]);
             match active_menu_item {
-                MenuItem::Session => render_session(rect, &app, chunks[1]),
+                MenuItem::Session => render_session(rect, &mut app, chunks[1]),
                 MenuItem::Stats => render_stats(rect, &app, chunks[1]), 
             }
             rect.render_widget(footer, chunks[2]);
@@ -170,7 +178,7 @@ fn run_app<B: Backend>(
 
     Ok(())
 }
-fn render_session<B>(f: &mut Frame<B>, app: &impl PomodoroTimer, area: Rect)
+fn render_session<B>(f: &mut Frame<B>, app: &mut impl PomodoroTimer, area: Rect)
 where
     B: Backend,
 {
@@ -211,8 +219,8 @@ where
         .block(Block::default())
         .gauge_style(
             Style::default()
-                .bg(Color::Red)
-                .fg(Color::Black)
+                .fg(Color::Red)
+                .bg(Color::Black)
                 .add_modifier(Modifier::ITALIC | Modifier::BOLD),
         )
         .label(label)

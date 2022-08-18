@@ -13,10 +13,11 @@ pub trait Sprint {
   fn start(&mut self);
   fn pause(&mut self);
   fn stop(&mut self);
-  fn progress(&self) -> i8;
+  fn progress(&mut self) -> i8;
   fn remaining(&self) -> i16;
 }
 
+#[derive(PartialEq)]
 enum Status {
   Started,
   Stoped,
@@ -33,14 +34,16 @@ pub struct SprintImpl {
   enlapsed: Arc<Mutex<i16>>,
   status: Status,
   sprintType: SprintType,
+  notification: fn(),
 }
 
 impl SprintImpl {
-  pub fn new(t: SprintType) -> Self {
+  pub fn new(t: SprintType, n: fn()) -> Self {
     Self {
       enlapsed: Arc::new(Mutex::new(0)),
       status: Status::Stoped,
       sprintType: t,
+      notification: n,
     }
   }
 
@@ -77,9 +80,16 @@ impl Sprint for SprintImpl {
     self.status = Status::Stoped;
   }
 
-  fn progress(&self) -> i8 {
+  fn progress(&mut self) -> i8 {
     let enlapsed = *self.enlapsed.lock().unwrap() as f64;
     let percentage = (enlapsed / self.totalTime() as f64 * 100.0) as i8;
+
+    if percentage >= 100 && self.status == Status::Started {
+      self.stop();
+      let n = self.notification;
+      n();
+    }
+
     min(percentage, 100)
   }
 
