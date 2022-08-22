@@ -219,8 +219,8 @@ where
         .block(Block::default())
         .gauge_style(
             Style::default()
-                .fg(Color::Red)
-                .bg(Color::Black)
+                .bg(Color::Red)
+                .fg(Color::Black)
                 .add_modifier(Modifier::ITALIC | Modifier::BOLD),
         )
         .label(label)
