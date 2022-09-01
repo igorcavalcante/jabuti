@@ -12,3 +12,4 @@ Just Another Basic Timer
 - Show the statistics screen
 - Use channels stead of mutex to share data between threads
 - Notify using the OS notification system when Pomodoros and pauses have finished
+- Pause

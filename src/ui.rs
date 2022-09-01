@@ -1,4 +1,4 @@
-use crate::domain::pomodoroTimer::*;
+use crate::domain::pomodoro_timer::*;
 use std::sync::mpsc;
 use std::thread;
 use notify_rust::Notification;
@@ -78,7 +78,7 @@ fn notification() {
 
 fn run_app<B: Backend>(
     terminal: &mut Terminal<B>,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), Box<dyn Error>> {
     let (tx, rx) = mpsc::channel();
     let tick_rate = Duration::from_millis(200);
     let mut app = PomodoroTimerImpl::new(notification);
@@ -165,9 +165,10 @@ fn run_app<B: Backend>(
                     terminal.show_cursor()?;
                     break;
                 }
-                KeyCode::Char('p') => app.startPomodoro(),
-                KeyCode::Char('s') => app.startShortInterval(),
-                KeyCode::Char('l') => app.startLongInterval(),
+                KeyCode::Char('p') => app.start_pomodoro(),
+                KeyCode::Char('s') => app.start_short_interval(),
+                KeyCode::Char('l') => app.start_long_interval(),
+                KeyCode::Char(' ') => app.pause_toggle(),
                 KeyCode::Left => active_menu_item = MenuItem::Session,
                 KeyCode::Right => active_menu_item = MenuItem::Stats,
                 _ => {}
@@ -198,8 +199,8 @@ where
     let block = Block::default().borders(Borders::ALL);
     f.render_widget(block, area);
 
-    let minutes = app.loadRemainingTime() / 60;
-    let seconds = app.loadRemainingTime() % 60;
+    let minutes = app.load_remaining_time() / 60;
+    let seconds = app.load_remaining_time() % 60;
 
     let text = vec![
         Spans::from("Time Remaining"),
@@ -214,7 +215,7 @@ where
 
     f.render_widget(remaining, chunks[0]);
 
-    let label = format!("{:}%", app.loadProgress());
+    let label = format!("{:}%", app.load_progress());
     let gauge = Gauge::default()
         .block(Block::default())
         .gauge_style(
@@ -224,11 +225,11 @@ where
                 .add_modifier(Modifier::ITALIC | Modifier::BOLD),
         )
         .label(label)
-        .percent(app.loadProgress() as u16);
+        .percent(app.load_progress() as u16);
     f.render_widget(gauge, chunks[1]);
 }
 
-fn render_stats<B>(f: &mut Frame<B>, app: &impl PomodoroTimer, area: Rect)
+fn render_stats<B>(f: &mut Frame<B>, _app: &impl PomodoroTimer, area: Rect)
 where
     B: Backend,
 {

@@ -11,7 +11,7 @@ const LONG_BREAK_TIME: i16 = 15 * 60;
 
 pub trait Sprint {
   fn start(&mut self);
-  fn pause(&mut self);
+  fn pause_toggle(&mut self);
   fn stop(&mut self);
   fn progress(&mut self) -> i8;
   fn remaining(&self) -> i16;
@@ -20,7 +20,7 @@ pub trait Sprint {
 #[derive(PartialEq)]
 enum Status {
   Started,
-  Stoped,
+  Stopped,
   Paused,
 }
 
@@ -31,36 +31,41 @@ pub enum SprintType {
 }
 
 pub struct SprintImpl {
-  enlapsed: Arc<Mutex<i16>>,
-  status: Status,
-  sprintType: SprintType,
+  elapsed: Arc<Mutex<i16>>,
+  status: Arc<Mutex<Status>>,
+  sprint_type: SprintType,
   notification: fn(),
 }
 
 impl SprintImpl {
   pub fn new(t: SprintType, n: fn()) -> Self {
     Self {
-      enlapsed: Arc::new(Mutex::new(0)),
-      status: Status::Stoped,
-      sprintType: t,
+      elapsed: Arc::new(Mutex::new(0)),
+      status: Arc::new(Mutex::new(Status::Stopped)),
+      sprint_type: t,
       notification: n,
     }
   }
 
   fn tick(&mut self) {
-    let enlapsed = Arc::clone(&self.enlapsed);
-    let ticker = external_ticker::new(1..POMODORO_TIME + 1, Duration::from_secs(1));
+    let elapsed = Arc::clone(&self.elapsed);
+    let status = Arc::clone(&self.status);
+    let ticker = external_ticker::new(*elapsed.lock().unwrap()+1..POMODORO_TIME, Duration::from_secs(1));
 
     thread::spawn(move || {
       for i in ticker {
-        let mut secs = enlapsed.lock().unwrap();
-        *secs = i;
+        if *status.lock().unwrap() == Status::Started {
+          let mut secs = elapsed.lock().unwrap();
+          *secs = i;
+        } else {
+          break
+        }
       }
     });
   }
 
-  fn totalTime(&self) -> i16 {
-    match self.sprintType {
+  fn total_time(&self) -> i16 {
+    match self.sprint_type {
       SprintType::Pomodoro => POMODORO_TIME,
       SprintType::ShortBreak => SHORT_BREAK_TIME,
       SprintType::LongBreak => LONG_BREAK_TIME,
@@ -70,21 +75,35 @@ impl SprintImpl {
 
 impl Sprint for SprintImpl {
   fn start(&mut self) {
-    self.status = Status::Started;
+    let status = Arc::clone(&self.status);
+    *status.lock().unwrap() = Status::Started;
     self.tick();
   }
-  fn pause(&mut self) {
-    self.status = Status::Paused;
+
+  //TODO refact plz
+  fn pause_toggle(&mut self) {
+    let status_clone = Arc::clone(&self.status);
+    let mut status = status_clone.lock().unwrap();
+
+    if *status != Status::Paused {
+      *status = Status::Paused;
+      return
+    }
+    drop(status);
+    self.start();
   }
+
   fn stop(&mut self) {
-    self.status = Status::Stoped;
+    let status = Arc::clone(&self.status);
+    *status.lock().unwrap() = Status::Stopped;
   }
 
   fn progress(&mut self) -> i8 {
-    let enlapsed = *self.enlapsed.lock().unwrap() as f64;
-    let percentage = (enlapsed / self.totalTime() as f64 * 100.0) as i8;
+    let elapsed = *self.elapsed.lock().unwrap() as f64;
+    let status = Arc::clone(&self.status);
+    let percentage = (elapsed / self.total_time() as f64 * 100.0) as i8;
 
-    if percentage >= 100 && self.status == Status::Started {
+    if percentage >= 100 && *status.lock().unwrap() == Status::Started {
       self.stop();
       let n = self.notification;
       n();
@@ -94,7 +113,7 @@ impl Sprint for SprintImpl {
   }
 
   fn remaining(&self) -> i16 {
-    let enlapsed = *self.enlapsed.lock().unwrap();
-    max(self.totalTime() - enlapsed, 0)
+    let elapsed = *self.elapsed.lock().unwrap();
+    max(self.total_time() - elapsed, 0)
   }
 }

@@ -1,3 +1,2 @@
-pub mod pomodoro;
-pub mod pomodoroTimer;
+pub mod pomodoro_timer;
 pub mod sprint;
