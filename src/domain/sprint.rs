@@ -6,7 +6,7 @@ use std::time::Duration;
 use ticker::Ticker as external_ticker;
 
 const POMODORO_TIME: i16 = 25 * 60;
-const SHORT_BREAK_TIME: i16 = 5 * 1;
+const SHORT_BREAK_TIME: i16 = 5 * 60;
 const LONG_BREAK_TIME: i16 = 15 * 60;
 
 pub trait Sprint {
@@ -87,10 +87,10 @@ impl Sprint for SprintImpl {
 
     if *status != Status::Paused {
       *status = Status::Paused;
-      return
+    } else {
+      drop(status);
+      self.start();
     }
-    drop(status);
-    self.start();
   }
 
   fn stop(&mut self) {

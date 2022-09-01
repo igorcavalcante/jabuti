@@ -124,7 +124,7 @@ fn run_app<B: Backend>(
                 .split(size);
 
             let footer = Paragraph::new(
-                "(p) new pomodoro (s) short interval (l) long interval (Left and Right) navigate tabs"
+                "(p) pomodoro (s) short (l) long <SPACE> pause (<- ->) navigate"
             )
                 .style(Style::default().fg(Color::LightCyan))
                 .alignment(Alignment::Center)
