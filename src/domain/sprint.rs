@@ -50,7 +50,7 @@ impl SprintImpl {
   fn tick(&mut self) {
     let elapsed = Arc::clone(&self.elapsed);
     let status = Arc::clone(&self.status);
-    let ticker = external_ticker::new(*elapsed.lock().unwrap()+1..POMODORO_TIME, Duration::from_secs(1));
+    let ticker = external_ticker::new(*elapsed.lock().unwrap()+1..POMODORO_TIME+1, Duration::from_secs(1));
 
     thread::spawn(move || {
       for i in ticker {
